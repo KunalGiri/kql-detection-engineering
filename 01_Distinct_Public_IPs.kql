@@ -1,0 +1,39 @@
+
+//
+// LAB 01: Identify Distinct Public Remote IPs
+// Category: Network Investigations
+// Data Source: DeviceNetworkEvents
+//
+// OBJECTIVE:
+// List unique public remote IP addresses observed
+// in network events during the last 1 hour.
+//
+// INVESTIGATION LOGIC:
+// 1. Query DeviceNetworkEvents for network telemetry.
+// 2. Filter events to the last 1 hour.
+// 3. Keep events where RemoteIPType is Public.
+// 4. Return distinct RemoteIP values only.
+// 5. Sort IP addresses in ascending order.
+//
+// KQL CONCEPTS:
+// - ago(1h): Defines a rolling 1-hour time window.
+// - where: Filters records based on conditions.
+// - distinct: Returns unique values, removing duplicates.
+// - sort by RemoteIP asc: Sorts results in ascending order.
+//
+// SOC RELEVANCE:
+// Provides a quick list of unique public IP addresses
+// communicating with monitored devices for initial
+// network investigation and threat hunting.
+//
+// IMPORTANT:
+// A public IP address is not automatically malicious.
+// Investigate context, device, process and reputation
+// before deciding whether activity is suspicious.
+//
+
+DeviceNetworkEvents
+| where TimeGenerated >= ago(1h)
+| where RemoteIPType == "Public"
+| distinct RemoteIP
+| sort by RemoteIP asc
