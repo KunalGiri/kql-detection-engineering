@@ -1,0 +1,47 @@
+// ============================================================
+// Lab 02: Brute-Force Candidate Detection
+// Data source: SecurityEvent
+// Objective: Identify accounts with 3 or more failed logons
+// from the same source IP within the last 24 hours.
+// Event ID 4625 represents a failed Windows logon.
+// ============================================================
+
+// Step 1: Select the Windows Security event log table
+SecurityEvent
+
+// Step 2: Filter events to the last 24 hours
+// ago(24h) calculates the timestamp 24 hours before now.
+// The > operator keeps events newer than that timestamp.
+| where TimeGenerated > ago(24h)
+
+// Step 3: Keep only failed logon events
+// Windows Security Event ID 4625 indicates a failed logon.
+| where EventID == 4625
+
+// Step 4: Exclude events without an account or source IP
+// Missing values make it harder to investigate the activity.
+| where isnotempty(Account) and isnotempty(IpAddress)
+
+// Step 5: Exclude machine accounts
+// Windows computer accounts commonly end with a dollar sign ($).
+// The not operator excludes account names with that suffix.
+| where not(Account endswith "$")
+
+// Step 6: Aggregate failed logons by account and source IP
+// count() counts matching events in each group.
+// min() returns the first failure timestamp.
+// max() returns the last failure timestamp.
+// Grouping by Account and IpAddress identifies each pair.
+| summarize
+    Failures= count(),
+    FirstFail = min(TimeGenerated),
+    LastFail = max(TimeGenerated)
+    by Account, IpAddress
+
+// Step 7: Keep groups with at least three failed logons
+// This reduces noise from isolated failed attempts.
+| where Failures>= 3
+
+// Step 8: Show groups with the highest failure counts first
+// desc means descending order.
+| sort by Failures desc
