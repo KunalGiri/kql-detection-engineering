@@ -1,0 +1,22 @@
+// ============================================================
+// Lab 03: Suspicious Tool Execution via Let-List
+// Objective: Find process events whose command lines contain
+// names associated with potentially suspicious security tools.
+// Time window: Last 24 hours.
+// ============================================================
+
+//Defining a list of sus Tools 
+let SuspiciousTools = dynamic(["mimikatz", "rubeus", "impacket", "bloodhound"]);
+
+//Now lets search process events from last 24hrs.
+DeviceProcessEvents
+| where Timegenerated > ago(24h)
+
+//Looking for command lines for any malicious tool name from the list above
+| where ProcessCommandLine has_any (SuspiciousTools)
+
+// Returning the requested Columns only
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine 
+
+//Had to add this function in the end as Expected Result was sorted by TimeGenerated.
+| sort by TimeGenerated desc
