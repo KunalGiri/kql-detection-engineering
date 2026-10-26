@@ -1,0 +1,18 @@
+// ============================================================
+// Lab 04: Most Recent Network Info Per Device
+// Objective: Return the latest network information for each
+// device, using records from the last 7 days.
+// Table: DeviceNetworkInfo
+// ============================================================
+
+// Step 1: Read device network information
+DeviceNetworkInfo
+
+// Step 2: Keep records from the last 7 days
+| where TimeGenerated > ago(7d)
+
+// Step 3: Return the complete, most recent row per device
+// arg_max() finds the maximum timestamp and returns the
+// associated columns. The * means return all columns.
+// Grouping by DeviceName performs this separately per device.
+| summarize arg_max(TimeGenerated, *) by DeviceName
