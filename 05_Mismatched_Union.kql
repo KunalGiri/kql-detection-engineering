@@ -1,0 +1,43 @@
+// ============================================================
+// Lab 05: Unified Successful Logon Investigation
+// Objective: Combine successful logon events from two sources.
+// Time window: Last 1 hour.
+// Sources: SecurityEvent and DeviceLogonEvents.
+// ============================================================
+
+// Source 1: Windows Security Event Log
+// Event ID 4624 represents a successful logon.
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| where EventID == 4624
+
+// Standardise the output columns and identify the source.
+| project
+    TimeGenerated,
+    Computer,
+    Account,
+    IpAddress,
+    Source = "SecEvent"
+
+// Combine with successful logons from Defender telemetry.
+| union (
+    DeviceLogonEvents
+    | where TimeGenerated > ago(1h)
+    | where ActionType == "LogonSuccess"
+
+// Rename columns so both sources share the same schema.
+    | project
+        TimeGenerated,
+        Computer = DeviceName,
+        Account = AccountName,
+        IpAddress = RemoteIP,
+        Source = "DefenderEDR"
+)
+
+// Show the newest logon events first.
+| sort by TimeGenerated desc
+
+// Exploration notes:
+// SecurityEvent: inspect available columns when learning the schema.
+// DeviceLogonEvents: inspect available columns when learning the schema.
+// Both sources are filtered to the last hour.
